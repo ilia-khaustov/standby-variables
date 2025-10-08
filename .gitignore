@@ -1,0 +1,6 @@
+.env
+.coverage
+.tox
+.venv
+dist
+.idea

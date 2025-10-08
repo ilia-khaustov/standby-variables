@@ -1,0 +1,87 @@
+[project]
+name = "standby-variables"
+description = "Dynamic variables for static namespaces"
+version = "1.0.0"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Ilia Khaustov" }
+]
+keywords = ["configuration", "environment", "typing", "variables", "validation"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3 :: Only",
+    "Typing :: Typed",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/ilia-khaustov/standby-variables"
+Repository = "https://github.com/ilia-khaustov/standby-variables"
+Issues = "https://github.com/ilia-khaustov/standby-variables/issues"
+
+[project.optional-dependencies]
+dev = [
+    "mypy",
+    "pytest",
+    "pytest-cov",
+    "isort",
+    "ruff",
+    "hatch",
+    "hatchling",
+    "tox>=4"
+]
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/standby"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/standby",
+    "README.md",
+    "pyproject.toml",
+]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=standby --cov-branch --cov-report=term-missing"
+testpaths = ["test"]
+
+[tool.mypy]
+python_version = "3.11"
+packages = ["standby"]
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+no_implicit_optional = true
+pretty = true
+
+[tool.isort]
+profile = "black"
+line_length = 120
+src_paths = ["src", "test"]
+known_first_party = ["standby"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+include = ["src/*.py", "test/*.py"]
+
+[tool.ruff.lint]
+# Enable basic errors (E), pyflakes (F), and import sorting (I)
+select = ["E", "F", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+# Allow unused imports in package __init__ for export surface
+"src/standby/__init__.py" = ["F401"]

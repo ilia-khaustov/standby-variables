@@ -1,0 +1,45 @@
+name: Validate
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  validate:
+    name: Tests (tox)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python-version: "3.11"
+            tox-env: "py311"
+          - python-version: "3.12"
+            tox-env: "py312"
+          - python-version: "3.13"
+            tox-env: "py313"
+          - python-version: "3.14"
+            tox-env: "py314"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install tox
+        run: |
+          python -m pip install --upgrade pip
+          pip install tox
+
+      - name: Run tests via tox (${{ matrix.tox-env }})
+        run: tox -e ${{ matrix.tox-env }}
+
+      - name: Run linters via tox
+        run: tox -e lint
+
+      - name: Run mypy via tox
+        run: tox -e type
