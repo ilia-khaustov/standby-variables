@@ -50,6 +50,6 @@ jobs:
         uses: coverallsapp/github-action@v2
         if: ${{ matrix.python-version == '3.13' }}
         with:
-          file: .coverage
-          format: python
+          file: coverage.xml
+          format: cobertura
           fail-on-error: false

@@ -55,7 +55,7 @@ include = [
 ]
 
 [tool.pytest.ini_options]
-addopts = "-q --cov=standby --cov-branch --cov-report=term-missing"
+addopts = "-q --cov=standby --cov-branch --cov-report=xml"
 testpaths = ["test"]
 
 [tool.mypy]
