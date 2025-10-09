@@ -41,8 +41,20 @@ class Variable(Generic[T], ABC):
     def __rshift__(self, hint: Hint[T]) -> Variable[T]:
         return hint.wrap(self)
 
-    def __or__(self, backup: Variable[T]) -> _BackupWrapper[T]:
+    def given(self, *hints: Hint[T]) -> Variable[T]:
+        wrapped = self
+        for hint in hints:
+            wrapped = hint.wrap(wrapped)
+        return wrapped
+
+    def __or__(self, backup: Variable[T]) -> Variable[T]:
         return _BackupWrapper(self, backup)
+
+    def otherwise(self, *backups: Variable[T]) -> Variable[T]:
+        wrapped = self
+        for backup in backups:
+            wrapped = _BackupWrapper(wrapped, backup)
+        return wrapped
 
     def __invert__(self) -> T:
         return cast(T, self)

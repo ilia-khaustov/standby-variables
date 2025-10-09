@@ -45,3 +45,11 @@ jobs:
 
       - name: Run mypy via tox
         run: tox -e type
+
+      - name: Send coverage report (coveralls)
+        uses: coverallsapp/github-action@v2
+        if: ${{ matrix.python-version == '3.13' }}
+        with:
+          file: .coverage
+          format: python
+          fail-on-error: false

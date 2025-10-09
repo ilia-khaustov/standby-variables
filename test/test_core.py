@@ -341,3 +341,51 @@ def test_repr_chaining_with_rshift_and_or():
     # or/backup chaining after rshift
     combined = (Var[int]("SBY_CHAIN", int) >> Default(7)) | Const[int](3)
     assert repr(combined) == "env.Var(SBY_CHAIN,int)>>Default(7)|Const[int](3)"
+
+
+def test_given_equivalence_and_behavior(monkeypatch: pytest.MonkeyPatch):
+    # given(Default(...)) behaves like >> Default(...)
+    monkeypatch.delenv("SBY_GIVEN", raising=False)
+    g1 = Var[int]("SBY_GIVEN", int).given(Default(7))
+    g2 = Var[int]("SBY_GIVEN", int) >> Default(7)
+    assert g1() == 7
+    assert g1.value() == 7
+    assert repr(g1) == repr(g2)
+
+    # When present, original value wins
+    monkeypatch.setenv("SBY_GIVEN", "9")
+    assert g1() == 9
+    assert g1.value() == 9
+
+    # multiple hints preserve order, and repr matches >> chain
+    monkeypatch.delenv("SBY_GIVEN2", raising=False)
+    g3 = Var[int]("SBY_GIVEN2", int).given(Required(False), Validated(lambda v: v > 0, raises=False))
+    g4 = Var[int]("SBY_GIVEN2", int) >> Required(False) >> Validated(lambda v: v > 0, raises=False)
+    assert g3() is None
+    assert repr(g3) == repr(g4)
+
+
+def test_otherwise_equivalence_and_behavior(monkeypatch: pytest.MonkeyPatch):
+    main = Var[int]("SBY_OW", int)
+    backup = Const[int](5)
+
+    # otherwise(...) behaves like | backup
+    ow1 = main.otherwise(backup)
+    ow2 = main | backup
+
+    monkeypatch.delenv("SBY_OW", raising=False)
+    assert ow1() == 5
+    assert ow1.value() == 5
+    assert repr(ow1) == repr(ow2)
+
+    # main present -> keep main
+    monkeypatch.setenv("SBY_OW", "12")
+    assert ow1() == 12
+    assert ow1.value() == 12
+
+    # multiple backups preserve order, and repr matches | chain
+    monkeypatch.delenv("SBY_OW", raising=False)
+    backup2 = Const[int](1)
+    ow3 = main.otherwise(backup, backup2)
+    ow4 = main | backup | backup2
+    assert repr(ow3) == repr(ow4)

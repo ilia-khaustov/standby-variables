@@ -1,7 +1,7 @@
 [project]
 name = "standby-variables"
 description = "Dynamic variables for static namespaces"
-version = "1.0.0"
+version = "1.1.0"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }

@@ -1,5 +1,9 @@
 # standby-variables
 
+[![PyPI](https://img.shields.io/pypi/v/standby-variables)](https://pypi.org/project/standby-variables/)
+[![GitHub branch check runs](https://img.shields.io/github/check-runs/ilia-khaustov/standby-variables/main)](https://github.com/ilia-khaustov/standby-variables/actions/workflows/)
+[![Coveralls](https://img.shields.io/coverallsCoverage/github/ilia-khaustov/standby-variables)](https://coveralls.io/github/ilia-khaustov/standby-variables)
+
 Dynamic variables for static namespaces.
 
 ## About
@@ -25,9 +29,9 @@ It’s tempting to sprinkle `os.environ.get(...)` everywhere - but that dilutes 
 With standby-variables your dynamic values become explicit and composable:
 
 - Declare what a variable is, how it’s parsed, and what to do if it’s missing.
-- Chain behavior using two operators:
-    * `>>` to apply "hints" (Default, Required, Validated)
-    * `|` to provide a backup variable
+- Configure the exact behaviour right next to a variable definition:
+    * use operator `>>` or chained call `given(*hints: standby.Hint)` to apply "hints" like Default, Required or Validated
+    * use operator `|` or chained call `otherwise(*backups: standby.Variable)` to specify one or more backup variables
 - Keep strong typing across your configuration surface.
 - Use dataclass-like descriptors that work as class attributes and cache nothing implicitly.
 
@@ -44,10 +48,10 @@ The result is readable configuration code that feels like constants, but evaluat
 ### Hints
 
 - `Default(value)` returns the default when the source is missing.
-- `Required(True)` (default) means the variable must be present.
+- `Required(True)` means the variable must be present (default behaviour).
 - `Required(False)` means "optional": `var()` can return `None`.
 - `Validated(predicate, raises=True)` ensures values pass a check.
-- `Validated(predicate, raises=False)` can "nullify" invalid values (returning `None` via `.__call__`) which you can then back up with `|` or keep as `None` if optional.
+- `Validated(predicate, raises=False)` will "nullify" invalid values and return `None` instead of raising an exception.
 
 Example:
 
@@ -65,30 +69,31 @@ def parse_bool(s: str) -> bool:
 
 class Settings:
     # A required int, with a default when missing
-    PORT: int =~ (env.Var("APP_PORT", int) >> Default(8000))
+    PORT: int =~ env.Var("APP_PORT", int).given(Default(8000))
 
     # Optional bool: returns None if missing
     DEBUG: bool | None =~ (env.Var("APP_DEBUG", parse_bool) >> Required(False))
 
     # A purely static value with validation
-    TIMEOUT: int =~ (Const(10) >> Validated(lambda v: v > 0))
+    TIMEOUT: int =~ Const(10).given(Validated(lambda v: v > 0))
 
 print(Settings.PORT)   # 8080 (from env), defaults to 8000 if unset
 print(Settings.DEBUG)  # None if APP_DEBUG is missing; True/False otherwise
 print(Settings.TIMEOUT)  # 10
 ```
 
-Backups with `|`:
+Fallback to "backup" variables:
 
 ```python
 from standby import env, Const
 
 class Settings:
     class API:
-        # Prefer ENV var; if missing, use a constant fallback
-        URL: str =~ (env.Var("API_URL", str) | Const("https://api.example.com"))
+        # Prefer ENV var; if missing, use another Variable as a fallback option
+        URL: str =~ (env.Var("API_URL", str) | env.Var("FALLBACK_API_URL", str))
+        KEY: str =~ env.Var("API_KEY", str).otherwise(env.Var("FALLBACK_API_KEY", str))
         
-print(Settings.API.URL)  # Returns ENV value if present, otherwise fallback
+print(Settings.API.URL)  # Returns first ENV value which is present
 ```
 
 Forcing with `.value()`:
@@ -98,7 +103,7 @@ from standby import env
 from standby.exc import VariableNotSet
 
 try:
-    must_have_port = env.Var[int]("MUST_HAVE_PORT", int).value()
+    must_have_port = env.Var("MUST_HAVE_PORT", int).value()
 except VariableNotSet as e:
     # Rich context in e.args for easier debugging
     print("Missing env:", e.args)
@@ -113,7 +118,7 @@ You might have noticed a weird operator `=~` used in example of `Settings` class
 In fact, it is two distinct operators: `=` and `~` joined together due to subjective preference.
 It is possible to have `~` attached to Variable definition like:
 
-    URL: str = ~(...)  # this is why expression is inside parenthesis
+    URL: str = ~(...)  # this is why operator expressions are inside parenthesis
 
 The role of this operator is to instruct type checker that nothing wrong happens when we define `Variable[T]` as its
 wrapped type `T`. When you access a variable via parent class/instance, Python invokes `__get__()` descriptor 
@@ -131,7 +136,7 @@ def parse_bool(s: str) -> bool:
 
 class Settings:
     # Expression has real type Variable[int] but defined inside a class as just int 
-    PORT: int =~ (env.Var("APP_PORT", int) >> Default(8000))
+    PORT: int =~ env.Var("APP_PORT", int).given(Default(8000))
 
     # Expression has real type Variable[bool] but is set to "bool | None" because it's hinted with Required(false)
     # Currently, unary operator casting to "T | None" is not implemented

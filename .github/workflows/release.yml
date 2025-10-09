@@ -1,13 +1,15 @@
 name: Release
 
 on:
-  workflow_dispatch:
+  release:
+    types: [created]
 
 jobs:
   validate:
     uses: ./.github/workflows/validate.yml
   publish:
     needs: [validate]
+    environment: release
     runs-on: ubuntu-latest
     permissions:
       id-token: write
