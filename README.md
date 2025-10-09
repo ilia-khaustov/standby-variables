@@ -1,7 +1,7 @@
 # standby-variables
 
 [![PyPI](https://img.shields.io/pypi/v/standby-variables)](https://pypi.org/project/standby-variables/)
-[![GitHub branch check runs](https://img.shields.io/github/check-runs/ilia-khaustov/standby-variables/main)](https://github.com/ilia-khaustov/standby-variables/actions/workflows/)
+[![GitHub branch check runs](https://img.shields.io/github/check-runs/ilia-khaustov/standby-variables/main)](https://github.com/ilia-khaustov/standby-variables/actions/)
 [![Coveralls](https://img.shields.io/coverallsCoverage/github/ilia-khaustov/standby-variables)](https://coveralls.io/github/ilia-khaustov/standby-variables)
 
 Dynamic variables for static namespaces.
